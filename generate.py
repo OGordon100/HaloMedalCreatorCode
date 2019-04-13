@@ -22,7 +22,7 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--num_medals', type=int, default=20000, help='number of medals to use. default 20000')
     parser.add_argument('-r', '--res_medals', type=int, default=75, help='pixel resolution of medals. default 75')
 
-    args = parser.parse_args()
+    args = parser.parse_args(["test.png", "-gHalo2"])
 
     if not args.output_file:
         output_name = f"{os.path.splitext(args.filename)[0]}_medalified.png"
@@ -67,6 +67,6 @@ if __name__ == '__main__':
             medal_images[min_index])
 
     print("Saving image:")
-    output_image = Image.fromarray(output_image)
+    output_image = Image.fromarray(output_image).convert("RGB")
     output_image.save(f"{os.path.splitext(output_name)[0]}.png", "PNG")
     output_image.show()
