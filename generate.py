@@ -1,16 +1,19 @@
 import argparse
-from medals import Medals
-from PIL import Image
-import numpy as np
 import itertools
-from tqdm import tqdm
 import os
+
+import numpy as np
+from PIL import Image
+from tqdm import tqdm
+
+from medals import Medals
 
 if __name__ == '__main__':
 
     # Parse arguments
-    parser = argparse.ArgumentParser(description='Generates images from Halo medals.')
-    parser.add_argument('filename', action="store", type=str, help='.png input file to be converted')
+    parser = argparse.ArgumentParser(
+        description='Generates images from Halo medals. e.g. python generate.py mcc.jpg -g Halo3 HaloReach')
+    parser.add_argument('filename', action="store", type=str, help='input file to be converted')
     parser.add_argument('-g', '--game', action="store",  nargs='+',
                         choices=['Halo2', 'Halo3', 'Halo4', 'HaloReach', 'all'],
                         default='Halo3',
