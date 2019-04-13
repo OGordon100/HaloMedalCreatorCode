@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
         # Find the closest match
         average_RGB = np.mean(rolling_segment, axis=(0, 1))
-        std_RGB = np.std(medal_averages - average_RGB, axis=1)
+        std_RGB = np.std(medal_averages - average_RGB[:3], axis=1)
         min_index = np.argmin(std_RGB)
 
         # Place medal in output image
