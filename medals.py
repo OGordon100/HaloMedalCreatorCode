@@ -77,11 +77,12 @@ class Medals:
         output_averages = np.zeros((0, 4))
 
         # Load all images as stacked numpy
-        i = 0  # Can't be bothered to use itertools
         print("Loading game images into memory: ")
+        i = 0  # cba to use itertools
         with tqdm(total=tot_files) as pbar:
             for gamename in self.gamenames:
-                output_averages = np.vstack((output_averages, np.loadtxt(f"{self.medal_folder}/{gamename}/colours.txt")))
+                output_averages = np.vstack((output_averages,
+                                             np.loadtxt(f"{self.medal_folder}/{gamename}/colours.txt")))
                 for image in os.listdir(f"{self.medal_folder}/{gamename}")[:-1]:
                     image = Image.open(f"{self.medal_folder}/{gamename}/{image}")
                     output_images[i, :, :, :] = np.array(image.getdata()).reshape(self.medal_res, self.medal_res, 4)
@@ -89,4 +90,5 @@ class Medals:
                     pbar.update(1)
 
         # Return
+        output_averages = output_averages[output_averages.sum(axis=1) != 0, :3]  # Some images aren't loaded (.svg)
         return output_images, output_averages
