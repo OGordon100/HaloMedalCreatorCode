@@ -5,24 +5,22 @@ from bs4 import BeautifulSoup
 from PIL import Image
 from tqdm import tqdm
 
-class Medals:
-    def __init__(self, gamename):
-        allowed_gamenames = ["Halo 2", "Halo 3", "Halo 4", "Halo 5", "Halo Reach", "all"]
-        if gamename not in allowed_gamenames:
-            raise KeyError(f"gamename must be one of {allowed_gamenames}")
 
-        if gamename == "all":
+class Medals:
+    def __init__(self, gamename, medal_res=150):
+        allowed_gamenames = ["Halo2", "Halo3", "Halo4", "HaloReach", "all"]
+        if gamename == ["all"]:
             self.gamenames = allowed_gamenames[:-1]
         else:
-            self.gamenames = [gamename]
+            self.gamenames = gamename
 
         self.medal_folder = "medals"
-        self._lookup_website = {"Halo 2": "https://www.halopedia.org/Category:Halo_2_Multiplayer_Medal_Images",
-                                "Halo 3": "https://halo.fandom.com/wiki/Halo_3_medals",
-                                "Halo 4": "https://halo.fandom.com/wiki/Halo_4_Medals",
-                                "Halo Reach": "https://halo.fandom.com/wiki/Halo:_Reach_Medals",
-                                "Halo 5": "http://halotracker.com/h5/db/medals"}
-        self.medal_res = 100
+        self._lookup_website = {"Halo2": "https://www.halopedia.org/Category:Halo_2_Multiplayer_Medal_Images",
+                                "Halo3": "https://halo.fandom.com/wiki/Halo_3_medals",
+                                "Halo4": "https://halo.fandom.com/wiki/Halo_4_Medals",
+                                "HaloReach": "https://halo.fandom.com/wiki/Halo:_Reach_Medals",
+                                "Halo5": "http://halotracker.com/h5/db/medals"}
+        self.medal_res = medal_res
         self.format = "PNG"
 
     def _get_from_fandom(self, soup):
@@ -41,7 +39,7 @@ class Medals:
         raise NotImplementedError
 
     def download_medals(self, gamename):
-        print("Getting medals...")
+        print(f"Downloading medals for {gamename}:")
         os.mkdir(f"{self.medal_folder}/{gamename}")
 
         r = requests.get(self._lookup_website[gamename])
@@ -68,7 +66,27 @@ class Medals:
                    X=average_colour)
 
     def load_medals(self):
+        tot_files = 0
         for gamename in self.gamenames:
             if not os.path.isdir(f"{self.medal_folder}/{gamename}"):
                 self.download_medals(gamename)
 
+            tot_files += len(os.listdir(f"{self.medal_folder}/{gamename}")) - 1
+
+        output_images = np.zeros((tot_files, self.medal_res, self.medal_res, 4))
+        output_averages = np.zeros((0, 4))
+
+        # Load all images as stacked numpy
+        i = 0  # Can't be bothered to use itertools
+        print("Loading game images into memory: ")
+        with tqdm(total=tot_files) as pbar:
+            for gamename in self.gamenames:
+                output_averages = np.vstack((output_averages, np.loadtxt(f"{self.medal_folder}/{gamename}/colours.txt")))
+                for image in os.listdir(f"{self.medal_folder}/{gamename}")[:-1]:
+                    image = Image.open(f"{self.medal_folder}/{gamename}/{image}")
+                    output_images[i, :, :, :] = np.array(image.getdata()).reshape(self.medal_res, self.medal_res, 4)
+                    i += 1
+                    pbar.update(1)
+
+        # Return
+        return output_images, output_averages
