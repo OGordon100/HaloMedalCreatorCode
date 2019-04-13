@@ -14,7 +14,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description='Generates images from Halo medals. e.g. python generate.py mcc.jpg -g Halo3 HaloReach')
     parser.add_argument('filename', action="store", type=str, help='input file to be converted')
-    parser.add_argument('-g', '--game', action="store",  nargs='+',
+    parser.add_argument('-g', '--games', action="store", nargs='+',
                         choices=['Halo2', 'Halo3', 'Halo4', 'HaloReach', 'all'],
                         default='Halo3',
                         help="game name. can use 'all' to use all games, or can be a combination of choice")
@@ -30,7 +30,7 @@ if __name__ == '__main__':
         output_name = args.output_file
 
     # Load up images
-    medals = Medals(args.game, medal_res=args.res_medals)
+    medals = Medals(args.games, medal_res=args.res_medals)
     medal_images, medal_averages = medals.load_medals()
     input_image = np.array(Image.open(args.filename))
 
