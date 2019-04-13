@@ -54,10 +54,10 @@ class Medals:
             images_url = self._get_from_halotracker(soup)
 
         # Download all images and get average colour for later checking
-        average_colour = np.zeros((len(images_url), 4))
+        average_colour = np.zeros((len(images_url), 3))
         for i, url in enumerate(tqdm(images_url)):
             if "svg" not in url:
-                im = Image.open(requests.get(url, stream=True).raw).convert('RGBA')
+                im = Image.open(requests.get(url, stream=True).raw).convert('RGB')
                 im_resized = im.resize((self.medal_res, self.medal_res))
                 im_resized.save(f"{self.medal_folder}/{gamename}/{i}.{self.format}", self.format)
 
@@ -73,7 +73,7 @@ class Medals:
 
             tot_files += len(os.listdir(f"{self.medal_folder}/{gamename}")) - 1
 
-        output_images = np.zeros((tot_files, self.medal_res, self.medal_res, 4))
+        output_images = np.zeros((tot_files, self.medal_res, self.medal_res, 4)).astype("uint8")
         output_averages = np.zeros((0, 4))
 
         # Load all images as stacked numpy
@@ -84,8 +84,8 @@ class Medals:
                 output_averages = np.vstack((output_averages,
                                              np.loadtxt(f"{self.medal_folder}/{gamename}/colours.txt")))
                 for image in os.listdir(f"{self.medal_folder}/{gamename}")[:-1]:
-                    image = Image.open(f"{self.medal_folder}/{gamename}/{image}")
-                    output_images[i, :, :, :] = np.array(image.getdata()).reshape(self.medal_res, self.medal_res, 4)
+                    image = Image.open(f"{self.medal_folder}/{gamename}/{image}").convert("RGBA")
+                    output_images[i, :, :, :] = np.array(image.getdata()).reshape(self.medal_res, self.medal_res, -1)
                     i += 1
                     pbar.update(1)
 

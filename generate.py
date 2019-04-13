@@ -4,6 +4,7 @@ from PIL import Image
 import numpy as np
 import itertools
 from tqdm import tqdm
+import os
 
 if __name__ == '__main__':
 
@@ -15,10 +16,15 @@ if __name__ == '__main__':
                         default='Halo3',
                         help="game name. can use 'all' to use all games, or can be a combination of choice")
     parser.add_argument('-o', '--output_file', type=str, help='output file name. if left blank, autoname new file.')
-    parser.add_argument('-n', '--num_medals', type=int, default=100, help='number of medals to use. default 100')
+    parser.add_argument('-n', '--num_medals', type=int, default=50000, help='number of medals to use. default 100')
     parser.add_argument('-r', '--res_medals', type=int, default=150, help='pixel resolution of medals. default 150')
 
-    args = parser.parse_args(["test.png", "-gall"])
+    args = parser.parse_args(["test.png", "-gHaloReach"])
+
+    if not args.output_file:
+        output_name = f"{os.path.splitext(args.filename)[0]}_medalified.png"
+    else:
+        output_name = args.output_file
 
     # Load up images
     medals = Medals(args.game, medal_res=args.res_medals)
@@ -29,11 +35,11 @@ if __name__ == '__main__':
     num_columns = int(np.round(np.sqrt(input_image.shape[1]/input_image.shape[0]*args.num_medals)))
     num_rows = int(np.round(args.num_medals/num_columns))
 
-    output_image = np.zeros((int(num_rows*args.res_medals), int(num_columns*args.res_medals), 4))
+    output_image = np.zeros((int(num_rows*args.res_medals), int(num_columns*args.res_medals), 4)).astype("uint8")
 
     # Work along image!!
     print("Building image: ")
-    for i, j in tqdm(list(itertools.product(np.arange(num_columns-1), np.arange(num_rows-1)))):
+    for i, j in tqdm(list(itertools.product(np.arange(num_columns), np.arange(num_rows)))):
 
         # Take a section of the image
         start_columns = int(np.floor(input_image.shape[1] / num_columns * i))
@@ -44,4 +50,18 @@ if __name__ == '__main__':
         rolling_segment = input_image[start_rows:end_rows, start_columns:end_columns, :]
 
         # Find the closest match
-        np.mean(rolling_segment, axis=(0,1,2))
+        average_RGB = np.mean(rolling_segment, axis=(0, 1))
+        std_RGB = np.std(medal_averages - average_RGB, axis=1)
+        min_index = np.argmin(std_RGB)
+
+        # Place medal in output image
+        start_columns_out = i*args.res_medals
+        start_rows_out = j*args.res_medals
+        end_columns_out = start_columns_out + args.res_medals
+        end_rows_out = start_rows_out + args.res_medals
+
+        output_image[start_rows_out:end_rows_out, start_columns_out:end_columns_out, :] = np.array(
+            medal_images[min_index])
+
+    print("Saving image:")
+    Image.fromarray(output_image).save(f"{os.path.splitext(output_name)[0]}.png", "PNG")
