@@ -22,7 +22,7 @@ if __name__ == '__main__':
     parser.add_argument('-n', '--num_medals', type=int, default=20000, help='number of medals to use. default 20000')
     parser.add_argument('-r', '--res_medals', type=int, default=75, help='pixel resolution of medals. default 75')
 
-    args = parser.parse_args(["test.png", "-gHalo2"])
+    args = parser.parse_args()
 
     if not args.output_file:
         output_name = f"{os.path.splitext(args.filename)[0]}_medalified.png"
