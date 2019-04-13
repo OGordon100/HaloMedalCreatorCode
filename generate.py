@@ -16,10 +16,10 @@ if __name__ == '__main__':
                         default='Halo3',
                         help="game name. can use 'all' to use all games, or can be a combination of choice")
     parser.add_argument('-o', '--output_file', type=str, help='output file name. if left blank, autoname new file.')
-    parser.add_argument('-n', '--num_medals', type=int, default=50000, help='number of medals to use. default 100')
-    parser.add_argument('-r', '--res_medals', type=int, default=150, help='pixel resolution of medals. default 150')
+    parser.add_argument('-n', '--num_medals', type=int, default=20000, help='number of medals to use. default 20000')
+    parser.add_argument('-r', '--res_medals', type=int, default=75, help='pixel resolution of medals. default 75')
 
-    args = parser.parse_args(["test.png", "-gHaloReach"])
+    args = parser.parse_args()
 
     if not args.output_file:
         output_name = f"{os.path.splitext(args.filename)[0]}_medalified.png"
@@ -64,4 +64,6 @@ if __name__ == '__main__':
             medal_images[min_index])
 
     print("Saving image:")
-    Image.fromarray(output_image).save(f"{os.path.splitext(output_name)[0]}.png", "PNG")
+    output_image = Image.fromarray(output_image)
+    output_image.save(f"{os.path.splitext(output_name)[0]}.png", "PNG")
+    output_image.show()

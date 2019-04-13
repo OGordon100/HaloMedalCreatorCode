@@ -54,10 +54,10 @@ class Medals:
             images_url = self._get_from_halotracker(soup)
 
         # Download all images and get average colour for later checking
-        average_colour = np.zeros((len(images_url), 3))
+        average_colour = np.zeros((len(images_url), 4))
         for i, url in enumerate(tqdm(images_url)):
             if "svg" not in url:
-                im = Image.open(requests.get(url, stream=True).raw).convert('RGB')
+                im = Image.open(requests.get(url, stream=True).raw).convert('RGBA')
                 im_resized = im.resize((self.medal_res, self.medal_res))
                 im_resized.save(f"{self.medal_folder}/{gamename}/{i}.{self.format}", self.format)
 
@@ -77,7 +77,7 @@ class Medals:
         output_averages = np.zeros((0, 4))
 
         # Load all images as stacked numpy
-        print("Loading game images into memory: ")
+        print("Loading medal images into memory: ")
         i = 0  # cba to use itertools
         with tqdm(total=tot_files) as pbar:
             for gamename in self.gamenames:
