@@ -7,11 +7,15 @@ from tqdm import tqdm
 
 class Medals:
     def __init__(self, gamename):
-        allowed_gamenames = ["Halo 2", "Halo 3", "Halo 4", "Halo 5", "Halo Reach"]
+        allowed_gamenames = ["Halo 2", "Halo 3", "Halo 4", "Halo 5", "Halo Reach", "all"]
         if gamename not in allowed_gamenames:
             raise KeyError(f"gamename must be one of {allowed_gamenames}")
 
-        self.gamename = gamename
+        if gamename == "all":
+            self.gamenames = allowed_gamenames[:-1]
+        else:
+            self.gamenames = [gamename]
+
         self.medal_folder = "medals"
         self._lookup_website = {"Halo 2": "https://www.halopedia.org/Category:Halo_2_Multiplayer_Medal_Images",
                                 "Halo 3": "https://halo.fandom.com/wiki/Halo_3_medals",
@@ -36,30 +40,35 @@ class Medals:
     def _get_from_halotracker(self, soup):
         raise NotImplementedError
 
-    def download_medals(self):
-        if not os.path.isdir(f"{self.medal_folder}/{self.gamename}"):
-            print("Getting medals...")
-            os.mkdir(f"{self.medal_folder}/{self.gamename}")
+    def download_medals(self, gamename):
+        print("Getting medals...")
+        os.mkdir(f"{self.medal_folder}/{gamename}")
 
-            r = requests.get(self._lookup_website[self.gamename])
-            soup = BeautifulSoup(r.text, 'html.parser')
+        r = requests.get(self._lookup_website[gamename])
+        soup = BeautifulSoup(r.text, 'html.parser')
 
-            # Parse appropriately
-            if "fandom" in self._lookup_website[self.gamename]:
-                images_url = self._get_from_fandom(soup)
-            elif "halopedia" in self._lookup_website[self.gamename]:
-                images_url = self._get_from_halopedia(soup)
-            else:
-                images_url = self._get_from_halotracker(soup)
+        # Parse appropriately
+        if "fandom" in self._lookup_website[gamename]:
+            images_url = self._get_from_fandom(soup)
+        elif "halopedia" in self._lookup_website[gamename]:
+            images_url = self._get_from_halopedia(soup)
+        else:
+            images_url = self._get_from_halotracker(soup)
 
-            # Download all images and get average colour for later checking
-            average_colour = np.zeros((len(images_url), 4))
-            for i, url in enumerate(tqdm(images_url)):
-                if "svg" not in url:
-                    im = Image.open(requests.get(url, stream=True).raw).convert('RGBA')
-                    im_resized = im.resize((self.medal_res, self.medal_res))
-                    im_resized.save(f"{self.medal_folder}/{self.gamename}/{i}.{self.format}", self.format)
+        # Download all images and get average colour for later checking
+        average_colour = np.zeros((len(images_url), 4))
+        for i, url in enumerate(tqdm(images_url)):
+            if "svg" not in url:
+                im = Image.open(requests.get(url, stream=True).raw).convert('RGBA')
+                im_resized = im.resize((self.medal_res, self.medal_res))
+                im_resized.save(f"{self.medal_folder}/{gamename}/{i}.{self.format}", self.format)
 
-                    average_colour[i, :] = np.array(im).mean(axis=(0, 1))
-            np.savetxt(fname=f"{self.medal_folder}/{self.gamename}/colours.txt",
-                       X=average_colour)
+                average_colour[i, :] = np.array(im).mean(axis=(0, 1))
+        np.savetxt(fname=f"{self.medal_folder}/{gamename}/colours.txt",
+                   X=average_colour)
+
+    def load_medals(self):
+        for gamename in self.gamenames:
+            if not os.path.isdir(f"{self.medal_folder}/{gamename}"):
+                self.download_medals(gamename)
+
